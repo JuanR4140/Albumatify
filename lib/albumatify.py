@@ -108,6 +108,7 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
 
         if char == "w":
             clear_screen()
+            print("Albumatify\n----------\n")
             for i in range(discs):
                 print(f"Disc {i + 1}")
                 table = Table(show_header=True)
@@ -123,16 +124,19 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
 
             console.print("\nAre you sure you want to write these changes to disk? (y/n) > ", end="")
             if getch() == "y":
-                console.print("\nSweet! Let's get some more information about your album...")
+                console.print("\n\nSweet! Let's get some more information about your album...")
                 album = console.input("Enter name of album > ")
                 artist = console.input("Enter name of artist > ")
                 genre = console.input("Enter name of genre > ")
                 release = console.input("Enter release date > ")
 
-                print("Writing changes to disk, please wait....\n")
+                print("\nWriting changes to disk, please wait....\n")
+
+                progress = 1
+                progress_total = len(tracks)
 
                 for track, properties in tracks.items():
-                    print(f"Writing metadata for {track}....")
+                    print(f"Writing metadata for {track}.... ({progress}/{progress_total})")
                     mp3 = raw_tracks_path + track
                     audio = MP3(mp3, ID3=ID3)
 
@@ -158,11 +162,12 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
                     audio["TCON"] = TCON(encoding=3, text=genre)
                     audio["TDRC"] = TDRC(encoding=3, text=release)
                     audio["TPOS"] = TPOS(encoding=3, text=f"{properties['Disc']}/{discs}")
-                    audio["TRCK"] = TRCK(encoding=3, text=str(properties["Track"].replace(".mp3", "")))
+                    audio["TRCK"] = TRCK(encoding=3, text=str(properties["Track"]).replace(".mp3", ""))
 
                     audio.save()
+                    progress += 1
 
-                print("Changes written to disk successfully!")
+                print("\nChanges written to disk successfully!")
                 exit()
 
         if char == "x":
