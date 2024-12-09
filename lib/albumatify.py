@@ -1,5 +1,7 @@
 from os.path import isdir, isfile
 from rich.table import Table
+from mutagen.mp3 import MP3
+from mutagen.id3 import APIC, ID3, TIT2, TPE1, TALB, TCON, TDRC, TRCK, TPOS, error
 
 from lib.utils.scan import scan_path
 from lib.utils.check_for_existing_tracks import check_for_existing_track
@@ -103,6 +105,65 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
                 
                 tracks[source_track_key]["Disc"] = int(target_disc)
                 tracks[source_track_key]["Track"] = int(target_track)
+
+        if char == "w":
+            clear_screen()
+            for i in range(discs):
+                print(f"Disc {i + 1}")
+                table = Table(show_header=True)
+                table.add_column("Track No.")
+                table.add_column("Track")
+               
+                for track, properties in tracks.items():
+                    if properties["Disc"] == i + 1:
+                        table.add_row(str(properties["Track"]), track.replace(".mp3", ""))
+
+                console.print(table)
+                console.print("\n\n")
+
+            console.print("\nAre you sure you want to write these changes to disk? (y/n) > ", end="")
+            if getch() == "y":
+                console.print("\nSweet! Let's get some more information about your album...")
+                album = console.input("Enter name of album > ")
+                artist = console.input("Enter name of artist > ")
+                genre = console.input("Enter name of genre > ")
+                release = console.input("Enter release date > ")
+
+                print("Writing changes to disk, please wait....\n")
+
+                for track, properties in tracks.items():
+                    print(f"Writing metadata for {track}....")
+                    mp3 = raw_tracks_path + track
+                    audio = MP3(mp3, ID3=ID3)
+
+                    try:
+                        audio.add_tags()
+                    except error:
+                        pass
+
+                    with open(cover_art_path, "rb") as cover_art:
+                        audio.tags.add(
+                            APIC(
+                                encoding=3,
+                                mime="image/jpeg",
+                                type=3,
+                                desc="Cover",
+                                data=cover_art.read(),
+                            )
+                        )
+
+                    audio["TIT2"] = TIT2(encoding=3, text=track)
+                    audio["TPE1"] = TPE1(encoding=3, text=artist)
+                    audio["TALB"] = TALB(encoding=3, text=album)
+                    audio["TCON"] = TCON(encoding=3, text=genre)
+                    audio["TDRC"] = TDRC(encoding=3, text=release)
+                    audio["TPOS"] = TPOS(encoding=3, text=f"{properties['Disc']}/{discs}")
+                    audio["TRCK"] = TRCK(encoding=3, text=str(properties["Track"].replace(".mp3", "")))
+
+                    audio.save()
+
+                print("Changes written to disk successfully!")
+                exit()
 
         if char == "x":
             console.print("Are you sure you want to exit? All changes will be lost! (y/n) > ", end="")
