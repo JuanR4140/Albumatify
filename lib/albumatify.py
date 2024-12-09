@@ -17,6 +17,9 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
         print("Albumatify\n----------\n")
         print("a - add disc\nr - remove disc\ne - edit a track\nw - save changes\nx - discard changes\n\n")
 
+        tracks = dict(sorted(tracks.items(), key=lambda track: track[1]["Track"]))
+        
+        counter = 1
         for i in range(discs):
             print(f"Disc {i + 1}")
             table = Table(show_header=True)
@@ -25,10 +28,13 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
            
             for track, properties in tracks.items():
                 if properties["Disc"] == i + 1:
+                    tracks[track]["Track"] = counter
+                    counter += 1
                     table.add_row(str(properties["Track"]), track.replace(".mp3", ""))
 
             console.print(table)
             console.print("\n\n")
+            counter = 1
 
         console.print("CMD > ", end="")
 
@@ -41,6 +47,16 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
             if (discs - 1) == 0:
                 throw_non_fatal_error("Can not have 0 discs!", console, getch)
                 continue
+
+            disc_active = False
+            for track, properties in tracks.items():
+                if properties["Disc"] == (discs):
+                    disc_active = True
+
+            if disc_active:
+                throw_non_fatal_error("Can not remove disc with tracks!", console, getch)
+                continue
+
             discs -= 1
 
         if char == "e":
@@ -67,18 +83,26 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
 
             console.print("\n")
 
-            existing_track = check_for_existing_track(tracks, target_disc, target_track)
-            if existing_track:
-                console.print("Track exists.")
-            else:
-                console.print("Track does not exist.")
+            source_track_key = check_for_existing_track(tracks, source_disc, source_track)
+            existing_track_key = check_for_existing_track(tracks, target_disc, target_track)
 
-            while True:
-                if getch() == "k":
-                    break
+            if source_track_key == existing_track_key:
                 continue
 
-            # TODO - If track exists, shift it downwards and place source track in its place.
+            if existing_track_key:
+
+                tracks[existing_track_key]["Disc"] ^= tracks[source_track_key]["Disc"]
+                tracks[source_track_key]["Disc"] ^= tracks[existing_track_key]["Disc"]
+                tracks[existing_track_key]["Disc"] ^= tracks[source_track_key]["Disc"]
+
+                tracks[existing_track_key]["Track"] ^= tracks[source_track_key]["Track"]
+                tracks[source_track_key]["Track"] ^= tracks[existing_track_key]["Track"]
+                tracks[existing_track_key]["Track"] ^= tracks[source_track_key]["Track"]
+
+            else:
+                
+                tracks[source_track_key]["Disc"] = int(target_disc)
+                tracks[source_track_key]["Track"] = int(target_track)
 
         if char == "x":
             console.print("Are you sure you want to exit? All changes will be lost! (y/n) > ", end="")
