@@ -3,6 +3,7 @@ from rich.table import Table
 
 from lib.utils.scan import scan_path
 from lib.utils.check_for_existing_tracks import check_for_existing_track
+from lib.utils.non_fatal_error import throw_non_fatal_error
 
 discs = 1
 
@@ -38,10 +39,7 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
 
         if char == "r":
             if (discs - 1) == 0:
-                console.print("\n\nCan not have 0 discs!\nPress 'k' to continue.\n\n")
-                while True:
-                    if getch() == "k":
-                        break
+                throw_non_fatal_error("Can not have 0 discs!", console, getch)
                 continue
             discs -= 1
 
@@ -50,17 +48,11 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
             source_track = console.input("What track no. are you trying to edit? > ")
 
             if int(source_disc) > discs or int(source_disc) < 1:
-                console.print("\n\nSource disc does not exist!\nPress 'k' to continue.\n\n")
-                while True:
-                    if getch() == "k":
-                        break
+                throw_non_fatal_error("Source disc does not exist!", console, getch)
                 continue
 
             if not check_for_existing_track(tracks, source_disc, source_track):
-                console.print("\n\nSource track does not exist!\nPress 'k' to continue\n\n")
-                while True:
-                    if getch() == "k":
-                        break
+                throw_non_fatal_error("Source track does not exist!", console, getch)
                 continue
 
             console.print("\n")
@@ -69,10 +61,7 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
             target_track = console.input("What track no. should this track be set to? > ")
 
             if int(target_disc) > discs or int(target_disc) < 1:
-                console.print("\n\nTarget disc does not exist!\nPress 'k' to continue.\n\n")
-                while True:
-                    if getch() == "k":
-                        break
+                throw_non_fatal_error("Target disc does not exist!", console, getch)
                 continue
 
 
