@@ -107,5 +107,5 @@ def albumatify(raw_tracks_path, cover_art_path, getch, console, clear_screen):
         if char == "x":
             console.print("Are you sure you want to exit? All changes will be lost! (y/n) > ", end="")
             if getch() == "y":
-                console.print("\n")
+                clear_screen()
                 exit()
